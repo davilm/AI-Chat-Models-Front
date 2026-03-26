@@ -29,7 +29,7 @@ function extractMath(text: string): { text: string; store: MathEntry[] } {
   let i = 0
 
   while (i < lines.length) {
-    const line = lines[i]
+    const line = lines[i] ?? ''
     if (/^[ \t]*\[/.test(line)) {
       const block = [line]
       let j = i
@@ -45,12 +45,18 @@ function extractMath(text: string): { text: string; store: MathEntry[] } {
         j = i + 1
         const limit = Math.min(lines.length, i + 20)
         while (j < limit) {
-          block.push(lines[j])
+          block.push(lines[j] ?? '')
           const joined = block.join('\n').replace(SPACING_RE, '')
           const o = (joined.match(/\[/g) || []).length
           const c = (joined.match(/\]/g) || []).length
-          if (o > 0 && c >= o) { found = true; break }
-          if (j + 1 < lines.length && /^\s*$/.test(lines[j + 1])) { unclosed = true; break }
+          if (o > 0 && c >= o) {
+            found = true
+            break
+          }
+          if (j + 1 < lines.length && /^\s*$/.test(lines[j + 1] ?? '')) {
+            unclosed = true
+            break
+          }
           j++
         }
         if (!found && !unclosed) unclosed = true
@@ -82,16 +88,21 @@ function extractMath(text: string): { text: string; store: MathEntry[] } {
 }
 
 function wrapNakedMathInTable(text: string): string {
-  return text.split('\n').map(line => {
-    if (!line.includes('|')) return line
-    const cells = line.split('|')
-    return cells.map((cell, idx) => {
-      if (idx === 0 || idx === cells.length - 1) return cell
-      if (/\$|\\\(|\\\[|KATEX/.test(cell)) return cell
-      if (/\\[a-zA-Z]/.test(cell)) return ` $${cell.trim()}$ `
-      return cell
-    }).join('|')
-  }).join('\n')
+  return text
+    .split('\n')
+    .map((line) => {
+      if (!line.includes('|')) return line
+      const cells = line.split('|')
+      return cells
+        .map((cell, idx) => {
+          if (idx === 0 || idx === cells.length - 1) return cell
+          if (/\$|\\\(|\\\[|KATEX/.test(cell)) return cell
+          if (/\\[a-zA-Z]/.test(cell)) return ` $${cell.trim()}$ `
+          return cell
+        })
+        .join('|')
+    })
+    .join('\n')
 }
 
 export function renderMarkdown(rawText: string): string {
@@ -120,7 +131,7 @@ export function renderMarkdown(rawText: string): string {
 }
 
 export function highlightCode(el: HTMLElement): void {
-  el.querySelectorAll<HTMLElement>('pre code').forEach(block => {
+  el.querySelectorAll<HTMLElement>('pre code').forEach((block) => {
     hljs.highlightElement(block)
   })
 }
