@@ -43,5 +43,5 @@ export const INTRO_TEXT = `👋 Olá! Eu sou um **Monitor de Física** (protóti
 ⚠️ **Importante:** isso é um MODELO DE TESTE. Posso errar.
 Se quiser, diga seu assunto e o que você já sabe.`
 
-export const API_URL = 'https://project-zugqt.vercel.app/api/chat'
+export const API_URL = import.meta.env.VITE_API_URL as string
 export const MODEL = 'openai/gpt-oss-120b'

@@ -1,11 +1,15 @@
 import { ref, computed } from 'vue'
 import type { Chat, Mensagem } from '../types'
 import { API_URL, MODEL, INTRO_TEXT } from '../types'
+import { useUser } from './useUser'
 
 const STORAGE_KEY = 'chats'
 
 const chats = ref<Chat[]>([])
 const currentChatId = ref<string | null>(null)
+const currentSessionId = ref<string>(crypto.randomUUID())
+
+const { userName } = useUser()
 
 function nowTime(): string {
   return new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
@@ -28,6 +32,7 @@ function criarChat(): void {
   const chat: Chat = { id: Date.now().toString(), mensagens: [] }
   chats.value.push(chat)
   currentChatId.value = chat.id
+  currentSessionId.value = crypto.randomUUID()
   salvar()
 }
 
@@ -80,7 +85,12 @@ async function sendMessage(text: string): Promise<void> {
     const res = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages, model: MODEL }),
+      body: JSON.stringify({
+        messages,
+        model: MODEL,
+        userId: userName.value ?? 'anonimo',
+        sessionId: currentSessionId.value,
+      }),
     })
 
     let data: { answer?: string; error?: string | { message?: string } }

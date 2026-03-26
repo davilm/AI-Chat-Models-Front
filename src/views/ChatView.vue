@@ -1,23 +1,27 @@
 <template>
   <div class="layout">
+    <!-- Modal de identificação -->
+    <UserModal v-if="!isIdentified" @confirm="handleIdentify" />
+
     <AppSidebar
       @new-chat="handleNewChat"
       @select-example="handleExample"
     />
 
     <main class="main">
-      <!-- Topbar -->
       <header class="topbar">
         <div class="title">
           <h3>Chat de Estudos — Física</h3>
           <small>Foco: Ensino Médio • Monitor/Assistente • Protótipo</small>
         </div>
-        <button class="btn secondary" @click="showDisclaimer = !showDisclaimer">
-          {{ showDisclaimer ? 'Ocultar aviso' : 'Mostrar aviso' }}
-        </button>
+        <div class="topbar-right">
+          <span v-if="userName" class="user-badge">👤 {{ userName }}</span>
+          <button class="btn secondary" @click="showDisclaimer = !showDisclaimer">
+            {{ showDisclaimer ? 'Ocultar aviso' : 'Mostrar aviso' }}
+          </button>
+        </div>
       </header>
 
-      <!-- Messages -->
       <section ref="chatEl" class="chat">
         <ChatBubble
           v-for="(msg, idx) in currentChat?.mensagens"
@@ -26,10 +30,10 @@
         />
       </section>
 
-      <!-- Composer -->
       <ChatComposer
         ref="composerRef"
         :show-disclaimer="showDisclaimer"
+        :disabled="!isIdentified"
         @send="handleSend"
       />
     </main>
@@ -41,9 +45,12 @@ import { ref, watch, nextTick, onMounted } from 'vue'
 import AppSidebar from '../components/AppSidebar.vue'
 import ChatBubble from '../components/ChatBubble.vue'
 import ChatComposer from '../components/ChatComposer.vue'
+import UserModal from '../components/UserModal.vue'
 import { useChat } from '../composables/useChat'
+import { useUser } from '../composables/useUser'
 
 const { currentChat, carregar, criarChat, ensureIntro, sendMessage } = useChat()
+const { userName, isIdentified, setUser } = useUser()
 
 const chatEl = ref<HTMLElement | null>(null)
 const composerRef = ref<InstanceType<typeof ChatComposer> | null>(null)
@@ -53,6 +60,10 @@ function scrollToBottom(): void {
   nextTick(() => {
     if (chatEl.value) chatEl.value.scrollTop = chatEl.value.scrollHeight
   })
+}
+
+function handleIdentify(name: string): void {
+  setUser(name)
 }
 
 async function handleSend(text: string): Promise<void> {
@@ -70,7 +81,6 @@ function handleExample(query: string): void {
   composerRef.value?.setValue(query)
 }
 
-// Watch for new messages → scroll
 watch(
   () => currentChat.value?.mensagens.length,
   () => scrollToBottom()
@@ -110,6 +120,16 @@ onMounted(() => {
 .topbar .title { display: flex; flex-direction: column; gap: 2px; }
 .topbar h3 { margin: 0; font-size: 14px; letter-spacing: .2px; }
 .topbar small { color: var(--muted); }
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+
+.user-badge {
+  font-size: 12px;
+  color: var(--accent);
+  background: rgba(34,197,94,.1);
+  border: 1px solid rgba(34,197,94,.2);
+  padding: 5px 10px;
+  border-radius: 999px;
+}
 
 .chat {
   flex: 1;
